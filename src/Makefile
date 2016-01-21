@@ -1,9 +1,6 @@
 CXXFLAGS=-Wall
 
-all : BlackScholesConstProcess MCEuropeanConstEngine
+all : blackscholesconstprocess 
 
-BlackScholesConstProcess : BlackScholesConstProcess.hpp
-	g++ -g -o BlackScholesConstProcess BlackScholesConstProcess.hpp -l QuantLib
-
-MCEuropeanConstEngine : MCEuropeanConstEngine.hpp
-	g++ -g -o MCEuropeanConstEngine MCEuropeanConstEngine.hpp -l QuantLib
+blackscholesconstprocess : blackscholesconstprocess.hpp blackscholesconstprocess.cpp
+	g++ -c blackscholesconstprocess.cpp -o blackscholesconstprocess.o -l QuantLib
