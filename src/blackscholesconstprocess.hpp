@@ -23,7 +23,7 @@ namespace QuantLib {
         const Handle<Quote>& x0,
         const Handle<YieldTermStructure>& dividendTS,
         const Handle<YieldTermStructure>& riskFreeTS,
-        const Handle<Quote>& blackVolTS,
+        const Handle<BlackVolTermStructure>& blackVolTS,
         // TODO initial here or not
         const boost::shared_ptr<discretization>& d =
                   boost::shared_ptr<discretization>(new EulerDiscretization));
@@ -45,7 +45,7 @@ namespace QuantLib {
         const Handle<Quote>& stateVariable() const;
         const Handle<YieldTermStructure>& dividendYield() const;
         const Handle<YieldTermStructure>& riskFreeRate() const;
-        const Handle<Quote>& blackVolatility() const;
+        const Handle<BlackVolTermStructure>& blackVolatility() const;
 	    const Rate riskFreeForward() const;
 	    const Rate dividendForward() const;
         //const Handle<LocalVolTermStructure>& localVolatility() const;
@@ -53,7 +53,7 @@ namespace QuantLib {
       private:
         Handle<Quote> x0_;
         Handle<YieldTermStructure> riskFreeRate_, dividendYield_;
-        Handle<Quote> blackVolatility_;
+        Handle<BlackVolTermStructure> blackVolatility_;
         mutable RelinkableHandle<LocalVolTermStructure> localVolatility_;
 	    Rate riskFreeForward_;
 	    Rate dividendForward_;

@@ -5,7 +5,7 @@
 
 using namespace QuantLib;
 
-int main(int, char* []){
+int main(int argc, char* argv[]){
     
     try{
         
@@ -84,7 +84,7 @@ int main(int, char* []){
         Size timeSteps = 1;
         Size mcSeed = 42;
         boost::shared_ptr<PricingEngine> mcengine1;
-        mcengine1 = MakeMCEuropeanConstEngine<PseudoRandom>(bsmProcess)
+        mcengine1 = MakeMCEuropeanEngine<PseudoRandom>(bsmProcess)
             .withSteps(timeSteps)
             .withAbsoluteTolerance(0.02)
             .withSeed(mcSeed);
@@ -99,6 +99,7 @@ int main(int, char* []){
         mcengine2 = MakeMCEuropeanConstEngine<LowDiscrepancy>(bsmProcess)
             .withSteps(timeSteps)
             .withSamples(nSamples);
+            
         europeanOption.setPricingEngine(mcengine2);
         std::cout << "MC (Sobol) : " << europeanOption.NPV() << std::endl;
 

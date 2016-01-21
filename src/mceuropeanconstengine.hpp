@@ -16,6 +16,7 @@
 #define quantlib_montecarlo_european_const_engine_hpp
 
 #include <ql/pricingengines/vanilla/mceuropeanengine.hpp>
+#include "./blackscholesconstprocess.hpp"
 
 namespace QuantLib {
 
@@ -49,14 +50,28 @@ namespace QuantLib {
                  requiredSamples,
                  requiredTolerance,
                  maxSamples,
-                 seed){ifConst = false;};
+                 seed){
+                            ifConst = false;
+                            realProcess = process;
+                       };
         void setConst(bool isConst){ifConst = isConst;};
-        protected:
+     protected:
             boost::shared_ptr<path_generator_type> pathGenerator() const {
+                if(ifConst){
+                    BlackScholesConstProcess constProcess(
+                        realProcess->stateVariable(),
+                        realProcess->dividendYield(),
+                        realProcess->riskFreeRate(),
+                        realProcess->blackVolatility()                                              
+                    );
+                    
+                }else{
                     return MCEuropeanEngine<RNG,S>::pathGenerator();
+                }
             };
         private:
-            bool ifConst;  
+            bool ifConst; 
+            boost::shared_ptr<GeneralizedBlackScholesProcess> realProcess;            
     };
 
     //! Monte Carlo European engine factory

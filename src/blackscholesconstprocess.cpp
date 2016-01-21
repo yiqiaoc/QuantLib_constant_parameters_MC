@@ -18,7 +18,7 @@ namespace QuantLib {
              const Handle<Quote>& x0,
              const Handle<YieldTermStructure>& dividendTS,
              const Handle<YieldTermStructure>& riskFreeTS,
-             const Handle<Quote>& blackVolTS,
+             const Handle<BlackVolTermStructure>& blackVolTS,
              const boost::shared_ptr<discretization>& disc)
     : StochasticProcess1D(disc), x0_(x0), riskFreeRate_(riskFreeTS),
       dividendYield_(dividendTS), blackVolatility_(blackVolTS) {
@@ -38,8 +38,8 @@ namespace QuantLib {
 
     // TODO what's different between localVolatility_ and blackVolatility_
     Real BlackScholesConstProcess::diffusion(Time t, Real x) const {
-        //return localVolatility_->localVol(t, x, true);
-        return blackVolatility()->value();
+        return localVolatility_->localVol(t, x, true);
+        //return blackVolatility()->value();
     }
 
     Real BlackScholesConstProcess::apply(Real x0, Real dx) const {
@@ -93,7 +93,7 @@ namespace QuantLib {
         return riskFreeRate_;
     }
 
-    const Handle<Quote>&
+    const Handle<BlackVolTermStructure>&
     BlackScholesConstProcess::blackVolatility() const {
         return blackVolatility_;
     }
