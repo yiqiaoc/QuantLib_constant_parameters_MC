@@ -1,6 +1,7 @@
 #include <ql/quantlib.hpp>
 #include <boost/timer.hpp>
 #include <iomanip>
+#include "../src/MCEuropeanConstEngine.hpp"
 
 using namespace QuantLib;
 
