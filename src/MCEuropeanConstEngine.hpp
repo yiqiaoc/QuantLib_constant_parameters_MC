@@ -59,6 +59,36 @@ namespace QuantLib {
             bool ifConst;  
     };
 
+    //! Monte Carlo European engine factory
+    template <class RNG = PseudoRandom, class S = Statistics>
+    class MakeMCEuropeanConstEngine:public MakeMCEuropeanEngine {
+      public:
+        MakeMCEuropeanConstEngine(
+                    const boost::shared_ptr<GeneralizedBlackScholesProcess>& process):MakeMCEuropeanEngine(process){};
+        
+        operator boost::shared_ptr<PricingEngine>() const;
+   
+    };
+
+    template <class RNG, class S>
+        inline
+        MakeMCEuropeanEngine<RNG,S>::operator boost::shared_ptr<PricingEngine>()
+                                                                          const {
+            QL_REQUIRE(steps_ != Null<Size>() || stepsPerYear_ != Null<Size>(),
+                       "number of steps not given");
+            QL_REQUIRE(steps_ == Null<Size>() || stepsPerYear_ == Null<Size>(),
+                       "number of steps overspecified");
+            return boost::shared_ptr<PricingEngine>(new
+                MCEuropeanConstEngine<RNG,S>(process_,
+                                        steps_,
+                                        stepsPerYear_,
+                                        brownianBridge_,
+                                        antithetic_,
+                                        samples_, tolerance_,
+                                        maxSamples_,
+                                        seed_));
+    }
+
 }
 
 
