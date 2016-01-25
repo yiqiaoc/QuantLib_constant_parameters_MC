@@ -17,6 +17,8 @@
 
 #include <ql/pricingengines/vanilla/mceuropeanengine.hpp>
 #include "./blackscholesconstprocess.hpp"
+#include <iostream>
+using namespace std;
 
 namespace QuantLib {
 
@@ -50,28 +52,40 @@ namespace QuantLib {
                  requiredSamples,
                  requiredTolerance,
                  maxSamples,
-                 seed){
-                            ifConst = false;
-                            realProcess = process;
-                       };
+                 seed),
+                 realProcess(process),
+                 seed_(seed),
+                 brownianBridge_(brownianBridge),
+                 ifConst(true){};   
         void setConst(bool isConst){ifConst = isConst;};
      protected:
             boost::shared_ptr<path_generator_type> pathGenerator() const {
                 if(ifConst){
-                    BlackScholesConstProcess constProcess(
+                    boost::shared_ptr<BlackScholesConstProcess> constProcess_(
+                    new BlackScholesConstProcess(
                         realProcess->stateVariable(),
                         realProcess->dividendYield(),
                         realProcess->riskFreeRate(),
                         realProcess->blackVolatility()                                              
-                    );
+                    ));
+                    
+                    Size dimensions = constProcess_->factors();
+                    TimeGrid grid = this->timeGrid();
+                    typename RNG::rsg_type generator =
+                        RNG::make_sequence_generator(dimensions*(grid.size()-1),seed_);
+                    cout<<"this is a const result"<<endl;
+                    return boost::shared_ptr<path_generator_type>(
+                            new path_generator_type(constProcess_, grid,
+                                           generator, brownianBridge_));
                     
                 }else{
                     return MCEuropeanEngine<RNG,S>::pathGenerator();
                 }
             };
-        private:
             bool ifConst; 
-            boost::shared_ptr<GeneralizedBlackScholesProcess> realProcess;            
+            boost::shared_ptr<GeneralizedBlackScholesProcess> realProcess;      
+            bool brownianBridge_;
+            BigNatural seed_;      
     };
 
     //! Monte Carlo European engine factory
