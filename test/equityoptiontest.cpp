@@ -1,12 +1,12 @@
 #include <ql/quantlib.hpp>
 #include <boost/timer.hpp>
 #include <iomanip>
-#include "../src/MCEuropeanConstEngine.hpp"
 #include "../src/blackscholesconstprocess.hpp"
+#include "../src/mceuropeanconstengine.hpp"
 
 using namespace QuantLib;
 
-int main(int, char* []){
+int main(int argc, char* argv[]){
     
     try{
         
@@ -92,6 +92,15 @@ int main(int, char* []){
         europeanOption.setPricingEngine(mcengine1);
         // Real errorEstimate = europeanOption.errorEstimate();
         std::cout << "MC (crude) : " << europeanOption.NPV() << std::endl;
+        
+        boost::shared_ptr<PricingEngine> mcengine1c;
+        mcengine1c = MakeMCEuropeanConstEngine<PseudoRandom>(bsmProcess)
+            .withSteps(timeSteps)
+            .withAbsoluteTolerance(0.02)
+            .withSeed(mcSeed);
+        europeanOption.setPricingEngine(mcengine1c);
+        // Real errorEstimate = europeanOption.errorEstimate();
+        std::cout << "MC const(crude) : " << europeanOption.NPV() << std::endl;
 
         // Monte Carlo Method: QMC (Sobol)
         Size nSamples = 32768;  // 2^15
@@ -100,8 +109,17 @@ int main(int, char* []){
         mcengine2 = MakeMCEuropeanEngine<LowDiscrepancy>(bsmProcess)
             .withSteps(timeSteps)
             .withSamples(nSamples);
+                 
         europeanOption.setPricingEngine(mcengine2);
         std::cout << "MC (Sobol) : " << europeanOption.NPV() << std::endl;
+        
+        boost::shared_ptr<PricingEngine> mcengine2c;
+        mcengine2c = MakeMCEuropeanConstEngine<LowDiscrepancy>(bsmProcess)
+            .withSteps(timeSteps)
+            .withSamples(nSamples);
+                 
+        europeanOption.setPricingEngine(mcengine2c);
+        std::cout << "MC const (Sobol) : " << europeanOption.NPV() << std::endl;
 
         // End test
         double seconds = timer.elapsed();
