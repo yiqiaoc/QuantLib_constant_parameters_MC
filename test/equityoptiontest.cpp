@@ -2,6 +2,7 @@
 #include <boost/timer.hpp>
 #include <iomanip>
 #include "../src/MCEuropeanConstEngine.hpp"
+#include "../src/blackscholesconstprocess.hpp"
 
 using namespace QuantLib;
 
