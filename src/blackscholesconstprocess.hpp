@@ -51,6 +51,7 @@ namespace QuantLib {
         //const Handle<LocalVolTermStructure>& localVolatility() const;
         
       private:
+        Real sigma;
         Handle<Quote> x0_;
         Handle<YieldTermStructure> riskFreeRate_, dividendYield_;
         Handle<BlackVolTermStructure> blackVolatility_;

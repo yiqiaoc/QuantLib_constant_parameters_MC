@@ -113,7 +113,7 @@ int main(int argc, char* argv[]){
         std::cout << "MC (Sobol) : " << europeanOption.NPV() << std::endl;
         
         boost::shared_ptr<PricingEngine> mcengine2c;
-        mcengine2c = MakeMCEuropeanEngine<LowDiscrepancy>(bsmProcess)
+        mcengine2c = MakeMCEuropeanConstEngine<LowDiscrepancy>(bsmProcess)
             .withSteps(timeSteps)
             .withSamples(nSamples);
                  
