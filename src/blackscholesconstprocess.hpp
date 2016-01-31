@@ -58,6 +58,7 @@ namespace QuantLib {
         mutable RelinkableHandle<LocalVolTermStructure> localVolatility_;
 	    Rate riskFreeForward_;
 	    Rate dividendForward_;
+        Real drift_;
         //mutable bool updated_, isStrikeIndependent_;
     };
 

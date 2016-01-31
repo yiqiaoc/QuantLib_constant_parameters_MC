@@ -14,6 +14,7 @@
 #include <iostream>
 using namespace std;
 
+
 namespace QuantLib {
 
     BlackScholesConstProcess::BlackScholesConstProcess(
@@ -24,10 +25,13 @@ namespace QuantLib {
              const boost::shared_ptr<discretization>& disc)
     : StochasticProcess1D(disc), x0_(x0), riskFreeRate_(riskFreeTS),
       dividendYield_(dividendTS), blackVolatility_(blackVolTS) {
-        riskFreeForward_ = 0;
-        dividendForward_ = 0;
-        sigma = blackVolatility_->blackVol(100, x0_->value(), true);
-        cout<< "sigma =" << sigma << endl;
+        riskFreeForward_ = riskFreeRate_->zeroRate(1, Continuous, NoFrequency, true);
+        dividendForward_ = dividendYield_->zeroRate(1, Continuous, NoFrequency, true);
+        sigma = blackVolatility_->blackVol(1, x0->value(), true);
+        drift_ = riskFreeForward_ - dividendForward_ - 0.5 * sigma * sigma;
+        cout << "sigma = " << sigma << endl;
+        cout << "riskFreeForward = " << riskFreeForward_ << endl;
+        cout << "dividendForward = " << dividendForward_ << endl;
       }
 
     Real BlackScholesConstProcess::x0() const {
@@ -37,20 +41,18 @@ namespace QuantLib {
     
     // TODO find good forme of drift, forwardrate
     Real BlackScholesConstProcess::drift(Time t, Real x) const {
-         
-        Real sigma = diffusion();
-	return riskFreeForward() - dividendForward() - 0.5 * sigma * sigma;
+        //Real sigma = diffusion();
+	    //return riskFreeForward() - dividendForward() - 0.5 * sigma * sigma;
+        //cout << "drift " << t << " " << x << endl;
+        return drift_;
     }
 
-    // TODO what's different between localVolatility_ and blackVolatility_
     Real BlackScholesConstProcess::diffusion(Time t, Real x) const {
-         
+        //cout << "diffusion " << t << " " << x << endl;
         return sigma;
-        //return blackVolatility()->value();
     }
 
-    Real BlackScholesConstProcess::apply(Real x0, Real dx) const {
-         
+    Real BlackScholesConstProcess::apply(Real x0, Real dx) const { 
         return x0 * std::exp(dx);
     }
 
@@ -115,16 +117,12 @@ namespace QuantLib {
 
     const Rate BlackScholesConstProcess::riskFreeForward() const {
          
-	    // TODO how to calculate
-        if(riskFreeForward_ != 0) return riskFreeForward_;
-        // else ... 
+        return riskFreeForward_;
     }
 
     const Rate BlackScholesConstProcess::dividendForward() const {
          
-	    // TODO how to calculate
-        if(dividendForward_ != 0) return dividendForward_;
-        // else ...
+        return dividendForward_;
     }
 
 }

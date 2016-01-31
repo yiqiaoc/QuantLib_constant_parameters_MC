@@ -75,15 +75,17 @@ int main(int argc, char* argv[]){
 
         // options
         VanillaOption europeanOption(payoff, europeanExercise);
-
+	
         // Black-Scholes for European
         europeanOption.setPricingEngine(boost::shared_ptr<PricingEngine>(
                     new AnalyticEuropeanEngine(bsmProcess)));
         std::cout << "Black-Scholes : " << europeanOption.NPV() << std::endl;
 
         // Monte Carlo Method: MC (crude)
-        Size timeSteps = 1;
+	        
+	Size timeSteps = 1;
         Size mcSeed = 42;
+	
         boost::shared_ptr<PricingEngine> mcengine1;
         mcengine1 = MakeMCEuropeanEngine<PseudoRandom>(bsmProcess)
             .withSteps(timeSteps)
@@ -101,10 +103,11 @@ int main(int argc, char* argv[]){
         europeanOption.setPricingEngine(mcengine1c);
         // Real errorEstimate = europeanOption.errorEstimate();
         std::cout << "MC const(crude) : " << europeanOption.NPV() << std::endl;
-
+	
+        
         // Monte Carlo Method: QMC (Sobol)
         Size nSamples = 32768;  // 2^15
-
+	
         boost::shared_ptr<PricingEngine> mcengine2;
         mcengine2 = MakeMCEuropeanEngine<LowDiscrepancy>(bsmProcess)
             .withSteps(timeSteps)
@@ -120,6 +123,7 @@ int main(int argc, char* argv[]){
                  
         europeanOption.setPricingEngine(mcengine2c);
         std::cout << "MC const (Sobol) : " << europeanOption.NPV() << std::endl;
+        
 
         // End test
         double seconds = timer.elapsed();
