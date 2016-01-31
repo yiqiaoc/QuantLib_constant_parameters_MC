@@ -26,7 +26,11 @@ namespace QuantLib {
       dividendYield_(dividendTS), blackVolatility_(blackVolTS) {
         riskFreeForward_ = 0;
         dividendForward_ = 0;
-        sigma = blackVolatility_->blackVol(100, x0_->value(), true);
+        sigma = blackVolatility_->blackVol(0, x0_->value(), true);
+        cout<< riskFreeForward() << endl;
+        cout<< dividendForward() << endl;
+        cout<< sigma << endl;
+        sigma = riskFreeForward() - dividendForward() - 0.5 * sigma * sigma;
         cout<< "sigma =" << sigma << endl;
       }
 
@@ -37,9 +41,8 @@ namespace QuantLib {
     
     // TODO find good forme of drift, forwardrate
     Real BlackScholesConstProcess::drift(Time t, Real x) const {
-         
-        Real sigma = diffusion();
-	return riskFreeForward() - dividendForward() - 0.5 * sigma * sigma;
+        //Real sigma = diffusion();
+	return sigma;
     }
 
     // TODO what's different between localVolatility_ and blackVolatility_
@@ -79,8 +82,7 @@ namespace QuantLib {
         // } else
         // 
         // TODO find out how to use this function
-        return apply(x0, discretization_->drift(*this, t0, x0, dt) +
-                                 stdDeviation(t0, x0, dt) * dw);
+        return x0_->value();
     }
 
     Time BlackScholesConstProcess::time(const Date& d) const {
@@ -116,14 +118,14 @@ namespace QuantLib {
     const Rate BlackScholesConstProcess::riskFreeForward() const {
          
 	    // TODO how to calculate
-        if(riskFreeForward_ != 0) return riskFreeForward_;
+        return riskFreeForward_;
         // else ... 
     }
 
     const Rate BlackScholesConstProcess::dividendForward() const {
          
 	    // TODO how to calculate
-        if(dividendForward_ != 0) return dividendForward_;
+        return dividendForward_;
         // else ...
     }
 
