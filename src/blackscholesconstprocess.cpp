@@ -26,9 +26,9 @@ namespace QuantLib {
     : StochasticProcess1D(disc), x0_(x0), riskFreeRate_(riskFreeTS),
       dividendYield_(dividendTS), blackVolatility_(blackVolTS) {
 
-        riskFreeForward_ = riskFreeRate_->zeroRate(1, Continuous, NoFrequency, true);
-        dividendForward_ = dividendYield_->zeroRate(1, Continuous, NoFrequency, true);
-        sigma = blackVolatility_->blackVol(1, x0->value(), true);
+        riskFreeForward_ = riskFreeRate_->zeroRate(10, Continuous, NoFrequency, true);
+        dividendForward_ = dividendYield_->zeroRate(10, Continuous, NoFrequency, true);
+        sigma = blackVolatility_->blackVol(10, x0->value(), true);
         drift_ = riskFreeForward_ - dividendForward_ - 0.5 * sigma * sigma;
         cout << "sigma = " << sigma << endl;
         cout << "riskFreeForward = " << riskFreeForward_ << endl;
@@ -82,7 +82,8 @@ namespace QuantLib {
         // } else
         // 
         // TODO find out how to use this function
-        return x0_->value();
+        return apply(x0, discretization_->drift(*this, t0, x0, dt) +
+                                 stdDeviation(t0, x0, dt) * dw);
     }
 
     Time BlackScholesConstProcess::time(const Date& d) const {

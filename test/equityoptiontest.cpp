@@ -26,7 +26,7 @@ int main(int argc, char* argv[]){
         Spread dividendYield = 0.00;
         Rate riskFreeRate = 0.06;
         Volatility volatility = 0.20;
-        Date maturity(17, May, 1999);
+        Date maturity(17, May, 2008);
         DayCounter dayCounter = Actual365Fixed();
 
         std::cout << "Option type = "  << type << std::endl;
@@ -60,6 +60,26 @@ int main(int argc, char* argv[]){
                 new BlackConstantVol(settlementDate, calendar, volatility,
                                      dayCounter)));
  
+ 
+          // bootstrap the yield/dividend/vol forward curves   
+        std::vector< Rate > forwardsRate(1,riskFreeRate);
+        std::vector< Rate > forwardsSpreads(1,riskFreeRate);  
+        std::vector< Date > dates();
+        //dates.push_back(settlementDate);
+        //dates.push_back(maturity);
+                         
+        Handle<YieldTermStructure> forwardTermStructure(
+            boost::shared_ptr<YieldTermStructure>(                
+               new InterpolatedForwardCurve<QuantLib::Linear> (dates, forwardsRate, dayCounter, calendar))); 
+                
+        Handle<YieldTermStructure> forwardDividendTS(
+            boost::shared_ptr<YieldTermStructure>(
+                new InterpolatedForwardCurve<QuantLib::Linear> (dates, forwardsSpreads, dayCounter, calendar)));
+                
+        Handle<BlackVolTermStructure> forwardVolTS(
+            boost::shared_ptr<BlackVolTermStructure>(
+                new BlackConstantVol(settlementDate, calendar, volatility,
+                                     dayCounter)));
 
         // european exercise
         boost::shared_ptr<Exercise> europeanExercise(
@@ -69,9 +89,13 @@ int main(int argc, char* argv[]){
         boost::shared_ptr<StrikedTypePayoff> payoff(
                 new PlainVanillaPayoff(type, strike));
 
-        // BlackScholes Merton Process
-        boost::shared_ptr<BlackScholesMertonProcess> bsmProcess(
+        // BlackScholes Merton Process platForward
+        boost::shared_ptr<BlackScholesMertonProcess> bsmProcessPlat(
                 new BlackScholesMertonProcess(underlyingH, flatDividendTS, flatTermStructure, flatVolTS));
+
+        // BlackScholes Merton Process forwardCurv
+        boost::shared_ptr<BlackScholesMertonProcess> bsmProcess(
+                new BlackScholesMertonProcess(underlyingH, flatDividendTS, flatTermStructure, forwardVolTS));
 
         // options
         VanillaOption europeanOption(payoff, europeanExercise);

@@ -58,6 +58,7 @@ namespace QuantLib {
                  brownianBridge_(brownianBridge),
                  ifConst(true){};   
         void setConst(bool isConst){ifConst = isConst;};
+        bool getConst(){ return ifConst;};
      protected:
             boost::shared_ptr<path_generator_type> pathGenerator() const {
                 if(ifConst){
