@@ -26,7 +26,7 @@ int main(int argc, char* argv[]){
         Spread dividendYield = 0.00;
         Rate riskFreeRate = 0.06;
         Volatility volatility = 0.20;
-        Date maturity(17, May, 1999);
+        Date maturity(17, May, 2007);
         DayCounter dayCounter = Actual365Fixed();
 
         std::cout << "Option type = "  << type << std::endl;
@@ -75,6 +75,7 @@ int main(int argc, char* argv[]){
 
         // options
         VanillaOption europeanOption(payoff, europeanExercise);
+        cout << "option exercise " << europeanOption.exercise()->lastDate() << endl; 
 	
         // Black-Scholes for European
         europeanOption.setPricingEngine(boost::shared_ptr<PricingEngine>(
@@ -87,7 +88,8 @@ int main(int argc, char* argv[]){
         Size mcSeed = 42;
 	
         boost::shared_ptr<PricingEngine> mcengine1;
-        mcengine1 = MakeMCEuropeanEngine<PseudoRandom>(bsmProcess)
+        // mcengine1 = MakeMCEuropeanEngine<PseudoRandom>(bsmProcess)
+        mcengine1 = MakeMCEuropeanConstEngine<PseudoRandom>(bsmProcess, false)
             .withSteps(timeSteps)
             .withAbsoluteTolerance(0.02)
             .withSeed(mcSeed);
@@ -96,7 +98,7 @@ int main(int argc, char* argv[]){
         std::cout << "MC (crude) : " << europeanOption.NPV() << std::endl;
         
         boost::shared_ptr<PricingEngine> mcengine1c;
-        mcengine1c = MakeMCEuropeanConstEngine<PseudoRandom>(bsmProcess)
+        mcengine1c = MakeMCEuropeanConstEngine<PseudoRandom>(bsmProcess, true)
             .withSteps(timeSteps)
             .withAbsoluteTolerance(0.02)
             .withSeed(mcSeed);
@@ -109,7 +111,8 @@ int main(int argc, char* argv[]){
         Size nSamples = 32768;  // 2^15
 	
         boost::shared_ptr<PricingEngine> mcengine2;
-        mcengine2 = MakeMCEuropeanEngine<LowDiscrepancy>(bsmProcess)
+        // mcengine2 = MakeMCEuropeanEngine<LowDiscrepancy>(bsmProcess)
+        mcengine2 = MakeMCEuropeanConstEngine<LowDiscrepancy>(bsmProcess, false)
             .withSteps(timeSteps)
             .withSamples(nSamples);
                  
@@ -117,7 +120,7 @@ int main(int argc, char* argv[]){
         std::cout << "MC (Sobol) : " << europeanOption.NPV() << std::endl;
         
         boost::shared_ptr<PricingEngine> mcengine2c;
-        mcengine2c = MakeMCEuropeanConstEngine<LowDiscrepancy>(bsmProcess)
+        mcengine2c = MakeMCEuropeanConstEngine<LowDiscrepancy>(bsmProcess, true)
             .withSteps(timeSteps)
             .withSamples(nSamples);
                  

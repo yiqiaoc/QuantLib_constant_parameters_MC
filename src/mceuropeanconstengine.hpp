@@ -43,7 +43,8 @@ namespace QuantLib {
              Size requiredSamples,
              Real requiredTolerance,
              Size maxSamples,
-             BigNatural seed) : MCEuropeanEngine<RNG,S>(
+             BigNatural seed,
+             bool ifconst) : MCEuropeanEngine<RNG,S>(
                  process,
                  timeSteps,
                  timeStepsPerYear,
@@ -56,8 +57,7 @@ namespace QuantLib {
                  realProcess(process),
                  seed_(seed),
                  brownianBridge_(brownianBridge),
-                 ifConst(true){};   
-        void setConst(bool isConst){ifConst = isConst;};
+                 ifConst(ifconst){};   
      protected:
             boost::shared_ptr<path_generator_type> pathGenerator() const {
                 if(ifConst){
@@ -93,7 +93,7 @@ namespace QuantLib {
     class MakeMCEuropeanConstEngine {
       public:
         MakeMCEuropeanConstEngine(
-                    const boost::shared_ptr<GeneralizedBlackScholesProcess>&);
+                    const boost::shared_ptr<GeneralizedBlackScholesProcess>&, bool ifconst);
         // named parameters
         MakeMCEuropeanConstEngine& withSteps(Size steps);
         MakeMCEuropeanConstEngine& withStepsPerYear(Size steps);
@@ -103,6 +103,7 @@ namespace QuantLib {
         MakeMCEuropeanConstEngine& withMaxSamples(Size samples);
         MakeMCEuropeanConstEngine& withSeed(BigNatural seed);
         MakeMCEuropeanConstEngine& withAntitheticVariate(bool b = true);
+
         // conversion to pricing engine
         operator boost::shared_ptr<PricingEngine>() const;
       private:
@@ -112,15 +113,16 @@ namespace QuantLib {
         Real tolerance_;
         bool brownianBridge_;
         BigNatural seed_;
+        bool ifConst_;
     };
 
     template <class RNG, class S>
     inline MakeMCEuropeanConstEngine<RNG,S>::MakeMCEuropeanConstEngine(
-             const boost::shared_ptr<GeneralizedBlackScholesProcess>& process)
+             const boost::shared_ptr<GeneralizedBlackScholesProcess>& process, bool ifconst)
     : process_(process), antithetic_(false),
       steps_(Null<Size>()), stepsPerYear_(Null<Size>()),
       samples_(Null<Size>()), maxSamples_(Null<Size>()),
-      tolerance_(Null<Real>()), brownianBridge_(false), seed_(0) {}
+      tolerance_(Null<Real>()), brownianBridge_(false), seed_(0), ifConst_(ifconst) {}
 
     template <class RNG, class S>
     inline MakeMCEuropeanConstEngine<RNG,S>&
@@ -201,7 +203,8 @@ namespace QuantLib {
                                     antithetic_,
                                     samples_, tolerance_,
                                     maxSamples_,
-                                    seed_));
+                                    seed_,
+                                    ifConst_));
     }
 
 }

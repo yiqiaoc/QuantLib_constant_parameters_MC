@@ -25,13 +25,14 @@ namespace QuantLib {
              const boost::shared_ptr<discretization>& disc)
     : StochasticProcess1D(disc), x0_(x0), riskFreeRate_(riskFreeTS),
       dividendYield_(dividendTS), blackVolatility_(blackVolTS) {
-        riskFreeForward_ = riskFreeRate_->zeroRate(1, Continuous, NoFrequency, true);
-        dividendForward_ = dividendYield_->zeroRate(1, Continuous, NoFrequency, true);
-        sigma = blackVolatility_->blackVol(1, x0->value(), true);
+        riskFreeForward_ = riskFreeRate_->zeroRate(9, Continuous, NoFrequency, true);
+        dividendForward_ = dividendYield_->zeroRate(9, Continuous, NoFrequency, true);
+        sigma = blackVolatility_->blackVol(9, x0->value(), true);
         drift_ = riskFreeForward_ - dividendForward_ - 0.5 * sigma * sigma;
         cout << "sigma = " << sigma << endl;
         cout << "riskFreeForward = " << riskFreeForward_ << endl;
         cout << "dividendForward = " << dividendForward_ << endl;
+	cout << "drift = " << drift_ << endl;
       }
 
     Real BlackScholesConstProcess::x0() const {
@@ -65,7 +66,7 @@ namespace QuantLib {
 
     Real BlackScholesConstProcess::evolve(Time t0, Real x0,
                                                 Time dt, Real dw) const {
-                                                     
+        
         //localVolatility(); // trigger update if necessary
         // 
         // if (isStrikeIndependent_) {
