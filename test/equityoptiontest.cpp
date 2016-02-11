@@ -75,8 +75,7 @@ int main(int argc, char* argv[]){
 
         // options
         VanillaOption europeanOption(payoff, europeanExercise);
-        cout << "option exercise " << europeanOption.exercise()->lastDate() << endl; 
-	
+
         // Black-Scholes for European
         europeanOption.setPricingEngine(boost::shared_ptr<PricingEngine>(
                     new AnalyticEuropeanEngine(bsmProcess)));

@@ -18,6 +18,7 @@ using namespace std;
 namespace QuantLib {
 
     BlackScholesConstProcess::BlackScholesConstProcess(
+             const Date& exercisedate,
              const Handle<Quote>& x0,
              const Handle<YieldTermStructure>& dividendTS,
              const Handle<YieldTermStructure>& riskFreeTS,
@@ -25,14 +26,18 @@ namespace QuantLib {
              const boost::shared_ptr<discretization>& disc)
     : StochasticProcess1D(disc), x0_(x0), riskFreeRate_(riskFreeTS),
       dividendYield_(dividendTS), blackVolatility_(blackVolTS) {
-        riskFreeForward_ = riskFreeRate_->zeroRate(9, Continuous, NoFrequency, true);
-        dividendForward_ = dividendYield_->zeroRate(9, Continuous, NoFrequency, true);
-        sigma = blackVolatility_->blackVol(9, x0->value(), true);
+        Time dt = time(exercisedate);
+        riskFreeForward_ = riskFreeRate_->zeroRate(dt, Continuous, NoFrequency, true);
+        dividendForward_ = dividendYield_->zeroRate(dt, Continuous, NoFrequency, true);
+        sigma = blackVolatility_->blackVol(dt, x0->value(), true);
         drift_ = riskFreeForward_ - dividendForward_ - 0.5 * sigma * sigma;
+        cout << "======parameters======" << endl;
+        cout << "dt = " << dt << endl;
         cout << "sigma = " << sigma << endl;
         cout << "riskFreeForward = " << riskFreeForward_ << endl;
         cout << "dividendForward = " << dividendForward_ << endl;
-	cout << "drift = " << drift_ << endl;
+	    cout << "drift = " << drift_ << endl;
+        cout << "======================" << endl;
       }
 
     Real BlackScholesConstProcess::x0() const {

@@ -20,6 +20,7 @@ namespace QuantLib {
     class BlackScholesConstProcess : public StochasticProcess1D {
       public:
         BlackScholesConstProcess(
+        const Date& exercisedate,
         const Handle<Quote>& x0,
         const Handle<YieldTermStructure>& dividendTS,
         const Handle<YieldTermStructure>& riskFreeTS,
