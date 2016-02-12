@@ -61,8 +61,10 @@ namespace QuantLib {
      protected:
             boost::shared_ptr<path_generator_type> pathGenerator() const {
                 if(ifConst){
+                    Date exercisedate = GenericEngine<OneAssetOption::arguments,OneAssetOption::results>::arguments_.exercise->lastDate(); 
                     boost::shared_ptr<BlackScholesConstProcess> constProcess_(
                     new BlackScholesConstProcess(
+                        exercisedate,
                         realProcess->stateVariable(),
                         realProcess->dividendYield(),
                         realProcess->riskFreeRate(),

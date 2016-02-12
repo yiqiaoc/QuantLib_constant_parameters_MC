@@ -84,7 +84,7 @@ int main(int argc, char* argv[]){
 
         // options
         VanillaOption europeanOption(payoff, europeanExercise);
-	
+
         // Black-Scholes for European
         europeanOption.setPricingEngine(boost::shared_ptr<PricingEngine>(
                     new AnalyticEuropeanEngine(bsmProcess)));

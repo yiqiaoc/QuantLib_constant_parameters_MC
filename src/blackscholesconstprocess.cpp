@@ -19,6 +19,7 @@ using namespace std;
 namespace QuantLib {
 
     BlackScholesConstProcess::BlackScholesConstProcess(
+             const Date& exercisedate,
              const Handle<Quote>& x0,
              const Handle<YieldTermStructure>& dividendTS,
              const Handle<YieldTermStructure>& riskFreeTS,
@@ -26,14 +27,17 @@ namespace QuantLib {
              const boost::shared_ptr<discretization>& disc)
     : StochasticProcess1D(disc), x0_(x0), riskFreeRate_(riskFreeTS),
       dividendYield_(dividendTS), blackVolatility_(blackVolTS) {
-
-        riskFreeForward_ = riskFreeRate_->zeroRate(9, Continuous, NoFrequency, true);
-        dividendForward_ = dividendYield_->zeroRate(9, Continuous, NoFrequency, true);
-        sigma = blackVolatility_->blackVol(9, x0->value(), true);
-
+          
+        Time dt = time(exercisedate);
+        riskFreeForward_ = riskFreeRate_->zeroRate(dt, Continuous, NoFrequency, true);
+        dividendForward_ = dividendYield_->zeroRate(dt, Continuous, NoFrequency, true);
+        sigma = blackVolatility_->blackVol(dt, x0->value(), true);
         drift_ = riskFreeForward_ - dividendForward_ - 0.5 * sigma * sigma;
-        cout << "sigma = " << sigma <<" "<< "riskFreeForward = " << riskFreeForward_ << " " << "dividendForward = " << dividendForward_ << " "<< "drift = " << drift_ << endl;
-        
+        stdDev_ = sqrt(dt)*sigma ;
+        cout << "======parameters======" << endl;
+        cout << "dt = " << dt << "  sigma = " << sigma <<" "<< "riskFreeForward = " << riskFreeForward_ << " " << "dividendForward = " << dividendForward_ << " "<< "drift = " << drift_ << endl;
+        cout << "======================" << endl;
+
       }
 
     Real BlackScholesConstProcess::x0() const {
@@ -67,20 +71,9 @@ namespace QuantLib {
 
     Real BlackScholesConstProcess::evolve(Time t0, Real x0,
                                                 Time dt, Real dw) const {
-        
-        //return  apply(x0, discretization_->drift(*this, t0, x0, dt) +
-        //                          tdDeviation(t0, x0, dt)  * dw);
-        
-        // cout<<"dx : " <<  dt*(drift_-(sigma*sigma)/2) <<"dx +dw : "<<discretization_->drift(*this, t0, x0, dt) +
-        //                           stdDeviation(t0, x0, dt)*dw << endl;  
-        // cout<< "x : " <<  apply(x0, dt*(drift_-(sigma*sigma)/2))<< "x with wd:"<<
-        // apply(x0, discretization_->drift(*this, t0, x0, dt) +
-        //                           stdDeviation(t0, x0, dt)  * dw) <<endl;
-        //cout<< stdDeviation(t0, x0, dt)<<"---"<<0.5 * sigma * sigma<< "dw:("<<dw<<") "<<  discretization_->drift(*this, t0, x0, dt)<<"---"<<drift_*dt<<"dt("<< dt <<")"<< endl;                  
         //http://quantlib.org/reference/class_quant_lib_1_1_generalized_black_scholes_process.html
-        //http://quantlib.org/slides/dima-ql-intro-2.pdf
-        
-        return apply(x0, dt*drift_ + sqrt(dt)*sigma *dw);
+        //http://quantlib.org/slides/dima-ql-intro-2.pdf       
+        return apply(x0, dt*drift_ + dw*stdDev_);
     }
 
     Time BlackScholesConstProcess::time(const Date& d) const {
