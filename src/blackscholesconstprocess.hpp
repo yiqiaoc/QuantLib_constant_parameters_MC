@@ -60,6 +60,8 @@ namespace QuantLib {
 	    Rate riskFreeForward_;
 	    Rate dividendForward_;
         Real drift_;
+        Real expectation_;
+        Real stdDev_;
         //mutable bool updated_, isStrikeIndependent_;
     };
 

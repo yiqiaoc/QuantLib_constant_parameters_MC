@@ -26,7 +26,9 @@ int main(int argc, char* argv[]){
         Spread dividendYield = 0.00;
         Rate riskFreeRate = 0.06;
         Volatility volatility = 0.20;
-        Date maturity(17, May, 2007);
+
+        Date maturity(17, May, 2001);
+
         DayCounter dayCounter = Actual365Fixed();
 
         std::cout << "Option type = "  << type << std::endl;
@@ -60,7 +62,38 @@ int main(int argc, char* argv[]){
                 new BlackConstantVol(settlementDate, calendar, volatility,
                                      dayCounter)));
  
+ 
+        // bootstrap the yield/dividend/vol forward curves   
+        
+        std::vector<Date> dates(3);
+        std::vector<Rate> rates(3);
+        std::vector<Volatility> vols(3);
 
+        dates[0] = Date(17, May, 1998);    
+        dates[1] = Date(17, May, 1999); //todaysDate+1*Years;    
+        dates[2] = Date(17, May, 2001); //todaysDate+3*Years; 
+        
+        rates[0] = 0.06;
+        rates[1] = 0.05;
+        rates[2] = 0.04;
+        
+        vols[0] = 0.20;
+        vols[1] = 0.25;
+        vols[2] = 0.33;
+        
+        Handle<YieldTermStructure> fowardTermStructure(
+            boost::shared_ptr<YieldTermStructure>(
+                new ForwardCurve(dates, rates, dayCounter)));
+                
+        Handle<YieldTermStructure> fowardDividendTS(
+            boost::shared_ptr<YieldTermStructure>(
+                new ForwardCurve(dates, rates, dayCounter)));
+                
+        Handle<BlackVolTermStructure> fowardVolTS(
+            boost::shared_ptr<BlackVolTermStructure>(
+                new BlackVarianceCurve(todaysDate, dates, vols,
+                                     dayCounter)));
+        
         // european exercise
         boost::shared_ptr<Exercise> europeanExercise(
                 new EuropeanExercise(maturity));
@@ -68,33 +101,59 @@ int main(int argc, char* argv[]){
         // payoff
         boost::shared_ptr<StrikedTypePayoff> payoff(
                 new PlainVanillaPayoff(type, strike));
-
-        // BlackScholes Merton Process
-        boost::shared_ptr<BlackScholesMertonProcess> bsmProcess(
-                new BlackScholesMertonProcess(underlyingH, flatDividendTS, flatTermStructure, flatVolTS));
-
         // options
         VanillaOption europeanOption(payoff, europeanExercise);
 
-        // Black-Scholes for European
+
+        // BlackScholes Merton Process platForward
+        boost::shared_ptr<BlackScholesMertonProcess> platbsmProcess(
+                new BlackScholesMertonProcess(underlyingH, flatDividendTS, flatTermStructure, flatVolTS));
+        
+        // BlackScholes Merton Process forward curve
+        boost::shared_ptr<BlackScholesMertonProcess> bsmProcess(
+                new BlackScholesMertonProcess(underlyingH, fowardDividendTS, fowardTermStructure, fowardVolTS));
+
+
+        // Black-Scholes for European plat
+        europeanOption.setPricingEngine(boost::shared_ptr<PricingEngine>(
+                    new AnalyticEuropeanEngine(platbsmProcess)));
+        clock_t t1,t2;  
+        Real res;
+        
+        t1 = clock();
+        res = europeanOption.NPV();     
+        t2 = clock();
+        std::cout << "Black-Scholes(plat curve) : " << res << " (" << (float)(t2-t1)/(double(CLOCKS_PER_SEC)*1000) << "ms)"<<std::endl;
+        
+        //double(CLOCKS_PER_SEC)*1000
+        
+        // Black-Scholes for European forward curve
         europeanOption.setPricingEngine(boost::shared_ptr<PricingEngine>(
                     new AnalyticEuropeanEngine(bsmProcess)));
-        std::cout << "Black-Scholes : " << europeanOption.NPV() << std::endl;
+
+        t1 = clock();
+        res = europeanOption.NPV();     
+        t2 = clock();
+        std::cout << "Black-Scholes(forward curve) : " << res << " (" << (float)(t2-t1)/(double(CLOCKS_PER_SEC)*1000) << "ms)"<<std::endl;
+        
 
         // Monte Carlo Method: MC (crude)
 	        
-	Size timeSteps = 1;
+	   Size timeSteps = 1;
         Size mcSeed = 42;
 	
         boost::shared_ptr<PricingEngine> mcengine1;
-        // mcengine1 = MakeMCEuropeanEngine<PseudoRandom>(bsmProcess)
-        mcengine1 = MakeMCEuropeanConstEngine<PseudoRandom>(bsmProcess, false)
+        mcengine1 = MakeMCEuropeanEngine<PseudoRandom>(bsmProcess)
             .withSteps(timeSteps)
             .withAbsoluteTolerance(0.02)
             .withSeed(mcSeed);
         europeanOption.setPricingEngine(mcengine1);
-        // Real errorEstimate = europeanOption.errorEstimate();
-        std::cout << "MC (crude) : " << europeanOption.NPV() << std::endl;
+
+        t1 = clock();
+        res = europeanOption.NPV();     
+        t2 = clock();
+        std::cout << "MC (crude) : " << res << " (" << (float)(t2-t1)/(double(CLOCKS_PER_SEC)*1000) << "ms)"<<std::endl;
+        
         
         boost::shared_ptr<PricingEngine> mcengine1c;
         mcengine1c = MakeMCEuropeanConstEngine<PseudoRandom>(bsmProcess, true)
@@ -102,8 +161,12 @@ int main(int argc, char* argv[]){
             .withAbsoluteTolerance(0.02)
             .withSeed(mcSeed);
         europeanOption.setPricingEngine(mcengine1c);
-        // Real errorEstimate = europeanOption.errorEstimate();
-        std::cout << "MC const(crude) : " << europeanOption.NPV() << std::endl;
+        
+        t1 = clock();
+        res = europeanOption.NPV();     
+        t2 = clock();
+        std::cout << "MC const(crude) : " << res << " (" << (float)(t2-t1)/(double(CLOCKS_PER_SEC)*1000) << "ms)"<<std::endl;
+        
 	
         
         // Monte Carlo Method: QMC (Sobol)
@@ -111,12 +174,16 @@ int main(int argc, char* argv[]){
 	
         boost::shared_ptr<PricingEngine> mcengine2;
         // mcengine2 = MakeMCEuropeanEngine<LowDiscrepancy>(bsmProcess)
-        mcengine2 = MakeMCEuropeanConstEngine<LowDiscrepancy>(bsmProcess, false)
+        mcengine2 = MakeMCEuropeanEngine<LowDiscrepancy>(bsmProcess)
             .withSteps(timeSteps)
             .withSamples(nSamples);
                  
         europeanOption.setPricingEngine(mcengine2);
-        std::cout << "MC (Sobol) : " << europeanOption.NPV() << std::endl;
+        
+        t1 = clock();
+        res = europeanOption.NPV();     
+        t2 = clock();
+        std::cout << "MC (Sobol) : " << res << " (" << (float)(t2-t1)/(double(CLOCKS_PER_SEC)*1000) << "ms)"<<std::endl;
         
         boost::shared_ptr<PricingEngine> mcengine2c;
         mcengine2c = MakeMCEuropeanConstEngine<LowDiscrepancy>(bsmProcess, true)
@@ -124,7 +191,10 @@ int main(int argc, char* argv[]){
             .withSamples(nSamples);
                  
         europeanOption.setPricingEngine(mcengine2c);
-        std::cout << "MC const (Sobol) : " << europeanOption.NPV() << std::endl;
+        t1 = clock();
+        res = europeanOption.NPV();     
+        t2 = clock();
+        std::cout << "MC const(Sobol) : " << res << " (" << (float)(t2-t1)/(double(CLOCKS_PER_SEC)*1000) << "ms)"<<std::endl;
         
 
         // End test
