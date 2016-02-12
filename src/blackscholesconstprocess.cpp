@@ -33,6 +33,7 @@ namespace QuantLib {
         dividendForward_ = dividendYield_->zeroRate(dt, Continuous, NoFrequency, true);
         sigma = blackVolatility_->blackVol(dt, x0->value(), true);
         drift_ = riskFreeForward_ - dividendForward_ - 0.5 * sigma * sigma;
+        expectation_ = dt*drift_;
         stdDev_ = sqrt(dt)*sigma ;
         cout << "======parameters======" << endl;
         cout << "dt = " << dt << "  sigma = " << sigma <<" "<< "riskFreeForward = " << riskFreeForward_ << " " << "dividendForward = " << dividendForward_ << " "<< "drift = " << drift_ << endl;
@@ -73,7 +74,7 @@ namespace QuantLib {
                                                 Time dt, Real dw) const {
         //http://quantlib.org/reference/class_quant_lib_1_1_generalized_black_scholes_process.html
         //http://quantlib.org/slides/dima-ql-intro-2.pdf       
-        return apply(x0, dt*drift_ + dw*stdDev_);
+        return apply(x0, expectation_ + dw*stdDev_);
     }
 
     Time BlackScholesConstProcess::time(const Date& d) const {

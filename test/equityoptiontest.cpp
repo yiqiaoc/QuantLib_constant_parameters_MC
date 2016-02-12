@@ -23,11 +23,11 @@ int main(int argc, char* argv[]){
         Option::Type type(Option::Put);
         Real underlying = 36;
         Real strike = 40;
-        Spread dividendYield = 0.01 * atoi(argv[1]);
+        Spread dividendYield = 0.00;
         Rate riskFreeRate = 0.06;
         Volatility volatility = 0.20;
 
-        Date maturity(17, May, 2007);
+        Date maturity(17, May, 2001);
 
         DayCounter dayCounter = Actual365Fixed();
 
@@ -63,12 +63,37 @@ int main(int argc, char* argv[]){
                                      dayCounter)));
  
  
-          // bootstrap the yield/dividend/vol forward curves   
-        std::vector< Rate > forwardsRate(1,riskFreeRate);
-        std::vector< Rate > forwardsSpreads(1,riskFreeRate);  
-        std::vector< Date > dates();
-        //dates.push_back(settlementDate);
-        //dates.push_back(maturity);
+        // bootstrap the yield/dividend/vol forward curves   
+        
+        std::vector<Date> dates(3);
+        std::vector<Rate> rates(3);
+        std::vector<Volatility> vols(3);
+
+        dates[0] = Date(17, May, 1998);    
+        dates[1] = Date(17, May, 1999); //todaysDate+1*Years;    
+        dates[2] = Date(17, May, 2001); //todaysDate+3*Years; 
+        
+        rates[0] = 0.06;
+        rates[1] = 0.05;
+        rates[2] = 0.04;
+        
+        vols[0] = 0.20;
+        vols[1] = 0.25;
+        vols[2] = 0.33;
+        
+        Handle<YieldTermStructure> fowardTermStructure(
+            boost::shared_ptr<YieldTermStructure>(
+                new ForwardCurve(dates, rates, dayCounter)));
+                
+        Handle<YieldTermStructure> fowardDividendTS(
+            boost::shared_ptr<YieldTermStructure>(
+                new ForwardCurve(dates, rates, dayCounter)));
+                
+        Handle<BlackVolTermStructure> fowardVolTS(
+            boost::shared_ptr<BlackVolTermStructure>(
+                new BlackVarianceCurve(todaysDate, dates, vols,
+                                     dayCounter)));
+        
         // european exercise
         boost::shared_ptr<Exercise> europeanExercise(
                 new EuropeanExercise(maturity));
@@ -76,23 +101,33 @@ int main(int argc, char* argv[]){
         // payoff
         boost::shared_ptr<StrikedTypePayoff> payoff(
                 new PlainVanillaPayoff(type, strike));
-
-        // BlackScholes Merton Process platForward
-        boost::shared_ptr<BlackScholesMertonProcess> bsmProcess(
-                new BlackScholesMertonProcess(underlyingH, flatDividendTS, flatTermStructure, flatVolTS));
-
-
         // options
         VanillaOption europeanOption(payoff, europeanExercise);
 
-        // Black-Scholes for European
+
+        // BlackScholes Merton Process platForward
+        boost::shared_ptr<BlackScholesMertonProcess> platbsmProcess(
+                new BlackScholesMertonProcess(underlyingH, flatDividendTS, flatTermStructure, flatVolTS));
+        
+        // BlackScholes Merton Process forward curve
+        boost::shared_ptr<BlackScholesMertonProcess> bsmProcess(
+                new BlackScholesMertonProcess(underlyingH, fowardDividendTS, fowardTermStructure, fowardVolTS));
+
+
+        // Black-Scholes for European plat
+        europeanOption.setPricingEngine(boost::shared_ptr<PricingEngine>(
+                    new AnalyticEuropeanEngine(platbsmProcess)));
+        std::cout << "Black-Scholes(plat curve) : " << europeanOption.NPV() << std::endl;
+        
+        // Black-Scholes for European forward curve
         europeanOption.setPricingEngine(boost::shared_ptr<PricingEngine>(
                     new AnalyticEuropeanEngine(bsmProcess)));
-        std::cout << "Black-Scholes : " << europeanOption.NPV() << std::endl;
+        std::cout << "Black-Scholes(forward curve) : " << europeanOption.NPV() << std::endl;
+        
 
         // Monte Carlo Method: MC (crude)
 	        
-	Size timeSteps = 1;
+	   Size timeSteps = 1;
         Size mcSeed = 42;
 	
         boost::shared_ptr<PricingEngine> mcengine1;
