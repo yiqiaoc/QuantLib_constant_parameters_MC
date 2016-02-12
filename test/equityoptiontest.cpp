@@ -23,10 +23,12 @@ int main(int argc, char* argv[]){
         Option::Type type(Option::Put);
         Real underlying = 36;
         Real strike = 40;
-        Spread dividendYield = 0.00;
+        Spread dividendYield = 0.01 * atoi(argv[1]);
         Rate riskFreeRate = 0.06;
         Volatility volatility = 0.20;
-        Date maturity(17, May, 2008);
+
+        Date maturity(17, May, 2007);
+
         DayCounter dayCounter = Actual365Fixed();
 
         std::cout << "Option type = "  << type << std::endl;
@@ -67,20 +69,6 @@ int main(int argc, char* argv[]){
         std::vector< Date > dates();
         //dates.push_back(settlementDate);
         //dates.push_back(maturity);
-                         
-        Handle<YieldTermStructure> forwardTermStructure(
-            boost::shared_ptr<YieldTermStructure>(                
-               new InterpolatedForwardCurve<QuantLib::Linear> (dates, forwardsRate, dayCounter, calendar))); 
-                
-        Handle<YieldTermStructure> forwardDividendTS(
-            boost::shared_ptr<YieldTermStructure>(
-                new InterpolatedForwardCurve<QuantLib::Linear> (dates, forwardsSpreads, dayCounter, calendar)));
-                
-        Handle<BlackVolTermStructure> forwardVolTS(
-            boost::shared_ptr<BlackVolTermStructure>(
-                new BlackConstantVol(settlementDate, calendar, volatility,
-                                     dayCounter)));
-
         // european exercise
         boost::shared_ptr<Exercise> europeanExercise(
                 new EuropeanExercise(maturity));
@@ -90,12 +78,9 @@ int main(int argc, char* argv[]){
                 new PlainVanillaPayoff(type, strike));
 
         // BlackScholes Merton Process platForward
-        boost::shared_ptr<BlackScholesMertonProcess> bsmProcessPlat(
+        boost::shared_ptr<BlackScholesMertonProcess> bsmProcess(
                 new BlackScholesMertonProcess(underlyingH, flatDividendTS, flatTermStructure, flatVolTS));
 
-        // BlackScholes Merton Process forwardCurv
-        boost::shared_ptr<BlackScholesMertonProcess> bsmProcess(
-                new BlackScholesMertonProcess(underlyingH, flatDividendTS, flatTermStructure, forwardVolTS));
 
         // options
         VanillaOption europeanOption(payoff, europeanExercise);
@@ -111,7 +96,8 @@ int main(int argc, char* argv[]){
         Size mcSeed = 42;
 	
         boost::shared_ptr<PricingEngine> mcengine1;
-        mcengine1 = MakeMCEuropeanEngine<PseudoRandom>(bsmProcess)
+        // mcengine1 = MakeMCEuropeanEngine<PseudoRandom>(bsmProcess)
+        mcengine1 = MakeMCEuropeanConstEngine<PseudoRandom>(bsmProcess, false)
             .withSteps(timeSteps)
             .withAbsoluteTolerance(0.02)
             .withSeed(mcSeed);
@@ -120,7 +106,7 @@ int main(int argc, char* argv[]){
         std::cout << "MC (crude) : " << europeanOption.NPV() << std::endl;
         
         boost::shared_ptr<PricingEngine> mcengine1c;
-        mcengine1c = MakeMCEuropeanConstEngine<PseudoRandom>(bsmProcess)
+        mcengine1c = MakeMCEuropeanConstEngine<PseudoRandom>(bsmProcess, true)
             .withSteps(timeSteps)
             .withAbsoluteTolerance(0.02)
             .withSeed(mcSeed);
@@ -133,7 +119,8 @@ int main(int argc, char* argv[]){
         Size nSamples = 32768;  // 2^15
 	
         boost::shared_ptr<PricingEngine> mcengine2;
-        mcengine2 = MakeMCEuropeanEngine<LowDiscrepancy>(bsmProcess)
+        // mcengine2 = MakeMCEuropeanEngine<LowDiscrepancy>(bsmProcess)
+        mcengine2 = MakeMCEuropeanConstEngine<LowDiscrepancy>(bsmProcess, false)
             .withSteps(timeSteps)
             .withSamples(nSamples);
                  
@@ -141,7 +128,7 @@ int main(int argc, char* argv[]){
         std::cout << "MC (Sobol) : " << europeanOption.NPV() << std::endl;
         
         boost::shared_ptr<PricingEngine> mcengine2c;
-        mcengine2c = MakeMCEuropeanConstEngine<LowDiscrepancy>(bsmProcess)
+        mcengine2c = MakeMCEuropeanConstEngine<LowDiscrepancy>(bsmProcess, true)
             .withSteps(timeSteps)
             .withSamples(nSamples);
                  

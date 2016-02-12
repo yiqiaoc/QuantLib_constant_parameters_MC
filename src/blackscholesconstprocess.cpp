@@ -12,6 +12,7 @@
 
 #include <boost/make_shared.hpp>
 #include <iostream>
+#include <math.h>
 using namespace std;
 
 
@@ -26,13 +27,13 @@ namespace QuantLib {
     : StochasticProcess1D(disc), x0_(x0), riskFreeRate_(riskFreeTS),
       dividendYield_(dividendTS), blackVolatility_(blackVolTS) {
 
-        riskFreeForward_ = riskFreeRate_->zeroRate(10, Continuous, NoFrequency, true);
-        dividendForward_ = dividendYield_->zeroRate(10, Continuous, NoFrequency, true);
-        sigma = blackVolatility_->blackVol(10, x0->value(), true);
+        riskFreeForward_ = riskFreeRate_->zeroRate(9, Continuous, NoFrequency, true);
+        dividendForward_ = dividendYield_->zeroRate(9, Continuous, NoFrequency, true);
+        sigma = blackVolatility_->blackVol(9, x0->value(), true);
+
         drift_ = riskFreeForward_ - dividendForward_ - 0.5 * sigma * sigma;
-        cout << "sigma = " << sigma << endl;
-        cout << "riskFreeForward = " << riskFreeForward_ << endl;
-        cout << "dividendForward = " << dividendForward_ << endl;
+        cout << "sigma = " << sigma <<" "<< "riskFreeForward = " << riskFreeForward_ << " " << "dividendForward = " << dividendForward_ << " "<< "drift = " << drift_ << endl;
+        
       }
 
     Real BlackScholesConstProcess::x0() const {
@@ -49,7 +50,7 @@ namespace QuantLib {
     }
 
     Real BlackScholesConstProcess::diffusion(Time t, Real x) const {
-        //cout << "diffusion " << t << " " << x << endl;
+        //cout << "diffusion function " << t << " " << x << endl;
         return sigma;
     }
 
@@ -66,24 +67,20 @@ namespace QuantLib {
 
     Real BlackScholesConstProcess::evolve(Time t0, Real x0,
                                                 Time dt, Real dw) const {
-                                                     
-        //localVolatility(); // trigger update if necessary
-        // 
-        // if (isStrikeIndependent_) {
-        //     // in case of a curve we can calculate exact values
-        //     Real variance = blackVolatility_->blackVariance(t0 + dt, 0.01) -
-        //                     blackVolatility_->blackVariance(t0, 0.01);
-        //     Real drift = (riskFreeRate_->forwardRate(t0, t0 + dt, Continuous,
-        //                                              NoFrequency, true) -
-        //                   dividendYield_->forwardRate(t0, t0 + dt, Continuous,
-        //                                               NoFrequency, true)) *
-        //         dt - 0.5 * variance;
-        //     return x0 * std::exp( std::sqrt(variance) * dw + drift );
-        // } else
-        // 
-        // TODO find out how to use this function
-        return apply(x0, discretization_->drift(*this, t0, x0, dt) +
-                                 stdDeviation(t0, x0, dt) * dw);
+        
+        //return  apply(x0, discretization_->drift(*this, t0, x0, dt) +
+        //                          tdDeviation(t0, x0, dt)  * dw);
+        
+        // cout<<"dx : " <<  dt*(drift_-(sigma*sigma)/2) <<"dx +dw : "<<discretization_->drift(*this, t0, x0, dt) +
+        //                           stdDeviation(t0, x0, dt)*dw << endl;  
+        // cout<< "x : " <<  apply(x0, dt*(drift_-(sigma*sigma)/2))<< "x with wd:"<<
+        // apply(x0, discretization_->drift(*this, t0, x0, dt) +
+        //                           stdDeviation(t0, x0, dt)  * dw) <<endl;
+        //cout<< stdDeviation(t0, x0, dt)<<"---"<<0.5 * sigma * sigma<< "dw:("<<dw<<") "<<  discretization_->drift(*this, t0, x0, dt)<<"---"<<drift_*dt<<"dt("<< dt <<")"<< endl;                  
+        //http://quantlib.org/reference/class_quant_lib_1_1_generalized_black_scholes_process.html
+        //http://quantlib.org/slides/dima-ql-intro-2.pdf
+        
+        return apply(x0, dt*drift_ + sqrt(dt)*sigma *dw);
     }
 
     Time BlackScholesConstProcess::time(const Date& d) const {
