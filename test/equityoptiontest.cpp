@@ -65,33 +65,38 @@ int main(int argc, char* argv[]){
  
         // bootstrap the yield/dividend/vol forward curves   
         
-        std::vector<Date> dates(3);
+        std::vector<Date> dates1(3);
         std::vector<Rate> rates(3);
-        std::vector<Volatility> vols(3);
 
-        dates[0] = Date(17, May, 1998);    
-        dates[1] = Date(17, May, 1999); //todaysDate+1*Years;    
-        dates[2] = Date(17, May, 2001); //todaysDate+3*Years; 
+        dates1[0] = Date(17, May, 1998);    
+        dates1[1] = Date(17, May, 1999); //todaysDate+1*Years;    
+        dates1[2] = Date(17, May, 2001); //todaysDate+3*Years; 
         
         rates[0] = 0.06;
         rates[1] = 0.05;
         rates[2] = 0.04;
         
-        vols[0] = 0.20;
-        vols[1] = 0.25;
-        vols[2] = 0.33;
         
         Handle<YieldTermStructure> fowardTermStructure(
             boost::shared_ptr<YieldTermStructure>(
-                new ForwardCurve(dates, rates, dayCounter)));
+                new ForwardCurve(dates1, rates, dayCounter)));
                 
         Handle<YieldTermStructure> fowardDividendTS(
             boost::shared_ptr<YieldTermStructure>(
-                new ForwardCurve(dates, rates, dayCounter)));
+                new ForwardCurve(dates1, rates, dayCounter)));
                 
+        std::vector<Volatility> vols(2);
+        std::vector<Date> dates2(2);
+        
+        dates2[0] = Date(17, May, 1999); //todaysDate+1*Years;    
+        dates2[1] = Date(17, May, 2001); //todaysDate+3*Years; 
+        
+        vols[0] = 0.20;
+        vols[1] = 0.25;
+        
         Handle<BlackVolTermStructure> fowardVolTS(
             boost::shared_ptr<BlackVolTermStructure>(
-                new BlackVarianceCurve(todaysDate, dates, vols,
+                new BlackVarianceCurve(todaysDate, dates2, vols,
                                      dayCounter)));
         
         // european exercise
@@ -106,26 +111,24 @@ int main(int argc, char* argv[]){
 
 
         // BlackScholes Merton Process platForward
-        boost::shared_ptr<BlackScholesMertonProcess> platbsmProcess(
+        boost::shared_ptr<BlackScholesMertonProcess> flatbsmProcess(
                 new BlackScholesMertonProcess(underlyingH, flatDividendTS, flatTermStructure, flatVolTS));
         
         // BlackScholes Merton Process forward curve
         boost::shared_ptr<BlackScholesMertonProcess> bsmProcess(
                 new BlackScholesMertonProcess(underlyingH, fowardDividendTS, fowardTermStructure, fowardVolTS));
 
-
         // Black-Scholes for European plat
+        
         europeanOption.setPricingEngine(boost::shared_ptr<PricingEngine>(
-                    new AnalyticEuropeanEngine(platbsmProcess)));
+                    new AnalyticEuropeanEngine(flatbsmProcess)));
         clock_t t1,t2;  
         Real res;
         
         t1 = clock();
         res = europeanOption.NPV();     
         t2 = clock();
-        std::cout << "Black-Scholes(plat curve) : " << res << " (" << (float)(t2-t1)/(double(CLOCKS_PER_SEC)*1000) << "ms)"<<std::endl;
-        
-        //double(CLOCKS_PER_SEC)*1000
+        std::cout << "Black-Scholes(flat curve) : " << res << " (" << (float)(t2-t1)/(double(CLOCKS_PER_SEC)*1000) << "ms)"<<std::endl;
         
         // Black-Scholes for European forward curve
         europeanOption.setPricingEngine(boost::shared_ptr<PricingEngine>(
@@ -143,7 +146,7 @@ int main(int argc, char* argv[]){
         Size mcSeed = 42;
 	
         boost::shared_ptr<PricingEngine> mcengine1;
-        mcengine1 = MakeMCEuropeanEngine<PseudoRandom>(bsmProcess)
+        mcengine1 = MakeMCEuropeanConstEngine<PseudoRandom>(bsmProcess, false)
             .withSteps(timeSteps)
             .withAbsoluteTolerance(0.02)
             .withSeed(mcSeed);
@@ -173,8 +176,7 @@ int main(int argc, char* argv[]){
         Size nSamples = 32768;  // 2^15
 	
         boost::shared_ptr<PricingEngine> mcengine2;
-        // mcengine2 = MakeMCEuropeanEngine<LowDiscrepancy>(bsmProcess)
-        mcengine2 = MakeMCEuropeanEngine<LowDiscrepancy>(bsmProcess)
+        mcengine2 = MakeMCEuropeanConstEngine<LowDiscrepancy>(bsmProcess, false)
             .withSteps(timeSteps)
             .withSamples(nSamples);
                  

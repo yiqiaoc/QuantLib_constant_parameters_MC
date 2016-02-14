@@ -1,5 +1,11 @@
-/* description
-   ...
+/* -*- mode: c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
+
+/*
+ Copyright (C) 2016 Yiqiao CHEN
+
+
+ This file is part of the QuantLib constant parameters project
+ FOR A PARTICULAR PURPOSE.  See the license for more details.
 */
 
 #include "./blackscholesconstprocess.hpp"
@@ -35,7 +41,7 @@ namespace QuantLib {
         drift_ = riskFreeForward_ - dividendForward_ - 0.5 * sigma * sigma;
         expectation_ = dt*drift_;
         stdDev_ = sqrt(dt)*sigma ;
-        cout << "======parameters======" << endl;
+        cout << "====const process=====" << endl;
         cout << "dt = " << dt << "  sigma = " << sigma <<" "<< "riskFreeForward = " << riskFreeForward_ << " " << "dividendForward = " << dividendForward_ << " "<< "drift = " << drift_ << endl;
         cout << "======================" << endl;
 

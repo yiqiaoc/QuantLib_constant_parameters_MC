@@ -1,5 +1,15 @@
-/* description
-   ...
+/* -*- mode: c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
+
+/*
+ Copyright (C) 2016 Yiqiao CHEN
+
+
+ This file is part of the QuantLib constant parameters project
+ FOR A PARTICULAR PURPOSE.  See the license for more details.
+*/
+
+/*! \file blackscholesconstprocess.hpp
+    \brief Black-Scholes processes with const parameters
 */
 
 #ifndef quantlib_black_scholes_const_process_hpp

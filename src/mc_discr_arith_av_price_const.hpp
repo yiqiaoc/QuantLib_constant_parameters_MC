@@ -1,24 +1,14 @@
 /* -*- mode: c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
 /*
- Copyright (C) 2000, 2001, 2002, 2003 RiskMap srl
- Copyright (C) 2003, 2004 Ferdinando Ametrano
+ Copyright (C) 2016 Yiqiao CHEN
 
- This file is part of QuantLib, a free-software/open-source library
- for financial quantitative analysts and developers - http://quantlib.org/
 
- QuantLib is free software: you can redistribute it and/or modify it
- under the terms of the QuantLib license.  You should have received a
- copy of the license along with this program; if not, please email
- <quantlib-dev@lists.sf.net>. The license is also available online at
- <http://quantlib.org/license.shtml>.
-
- This program is distributed in the hope that it will be useful, but WITHOUT
- ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ This file is part of the QuantLib constant parameters project
  FOR A PARTICULAR PURPOSE.  See the license for more details.
 */
 
-/*! \file mc_discr_arith_av_price.hpp
+/*! \file mc_discr_arith_av_price_const.hpp
     \brief Monte Carlo engine for discrete arithmetic average price Asian
 */
 
@@ -65,25 +55,36 @@ namespace QuantLib {
              Real requiredTolerance,
              Size maxSamples,
              BigNatural seed,
-             bool ifConst);
+             bool ifConst) : MCDiscreteArithmeticAPEngine<RNG,S>(process,
+                                            brownianBridge,
+                                            antitheticVariate,
+                                            controlVariate,
+                                            requiredSamples,
+                                            requiredTolerance,
+                                            maxSamples,
+                                            seed),
+                                            realProcess(process),
+                                            ifconst(ifConst),
+                                            seed_(seed),
+                                            brownianBridge_(brownianBridge){};
 
       protected:
         // McSimulation implementation
         boost::shared_ptr<path_generator_type> pathGenerator() const {
-            if(ifConst){
+            if(ifconst){
+                Date exercisedate = GenericEngine<DiscreteAveragingAsianOption::arguments,DiscreteAveragingAsianOption::results>::arguments_.exercise->lastDate(); 
                 boost::shared_ptr<BlackScholesConstProcess> constProcess_(
                 new BlackScholesConstProcess(
-                    process_->stateVariable(),
-                    process_->dividendYield(),
-                    process_->riskFreeRate(),
-                    process_->blackVolatility()                                              
+                    exercisedate,
+                    realProcess->stateVariable(),
+                    realProcess->dividendYield(),
+                    realProcess->riskFreeRate(),
+                    realProcess->blackVolatility()                                              
                 ));
                 
-                Size dimensions = process_->factors();
                 TimeGrid grid = this->timeGrid();
                 typename RNG::rsg_type gen =
-                RNG::make_sequence_generator(grid.size()-1,seed_);
-                cout<<"this is a const result"<<endl;
+                    RNG::make_sequence_generator(grid.size()-1,seed_);
                 return boost::shared_ptr<path_generator_type>(
                         new path_generator_type(constProcess_, grid,
                                        gen, brownianBridge_));
@@ -95,32 +96,10 @@ namespace QuantLib {
 
       private:
         bool ifconst;
+        boost::shared_ptr<GeneralizedBlackScholesProcess> realProcess;
+        BigNatural seed_;
+        bool brownianBridge_;
     };
-
-
-    // inline definitions
-
-    template <class RNG, class S>
-    inline
-    MCDiscreteArithmeticAPConstEngine<RNG,S>::MCDiscreteArithmeticAPConstEngine(
-             const boost::shared_ptr<GeneralizedBlackScholesProcess>& process,
-             bool brownianBridge,
-             bool antitheticVariate,
-             bool controlVariate,
-             Size requiredSamples,
-             Real requiredTolerance,
-             Size maxSamples,
-             BigNatural seed,
-             bool ifConst)
-    : MCDiscreteAveragingAsianEngine<RNG,S>(process,
-                                            brownianBridge,
-                                            antitheticVariate,
-                                            controlVariate,
-                                            requiredSamples,
-                                            requiredTolerance,
-                                            maxSamples,
-                                            seed), ifConst(ifconst) {}
-
 
     template <class RNG = PseudoRandom, class S = Statistics>
     class MakeMCDiscreteArithmeticAPConstEngine {
@@ -144,16 +123,16 @@ namespace QuantLib {
         Real tolerance_;
         bool brownianBridge_;
         BigNatural seed_;
-        bool ifConst;
+        bool ifconst;
     };
 
     template <class RNG, class S>
     inline
     MakeMCDiscreteArithmeticAPConstEngine<RNG,S>::MakeMCDiscreteArithmeticAPConstEngine(
-             const boost::shared_ptr<GeneralizedBlackScholesProcess>& process, bool ifconst)
+             const boost::shared_ptr<GeneralizedBlackScholesProcess>& process, bool ifConst)
     : process_(process), antithetic_(false), controlVariate_(false),
       samples_(Null<Size>()), maxSamples_(Null<Size>()),
-      tolerance_(Null<Real>()), brownianBridge_(true), seed_(0), ifConst(ifconst) {}
+      tolerance_(Null<Real>()), brownianBridge_(true), seed_(0), ifconst(ifConst) {}
 
     template <class RNG, class S>
     inline MakeMCDiscreteArithmeticAPConstEngine<RNG,S>&
@@ -223,7 +202,7 @@ namespace QuantLib {
                                                 samples_, tolerance_,
                                                 maxSamples_,
                                                 seed_,
-                                                ifConst));
+                                                ifconst));
     }
 
 
